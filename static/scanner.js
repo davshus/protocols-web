@@ -49,7 +49,7 @@ function closeConfirm() {
 }
 function confirm() {
     //TODO: COMPLETE
-    alert(lastResult);
+    // alert(lastResult);
     // socket.emit('scan', lastResult);
     fetch('/submit?data=' + lastResult);
     closeConfirm();

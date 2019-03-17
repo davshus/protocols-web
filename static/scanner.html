@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Protocols | Scanner</title>
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <link rel="stylesheet" href="common.css" />
+    <link rel="stylesheet" href="scanner.css" />
+</head>
+<body class="">
+<video class="preview"></video>
+<img class="switch-camera" src="img/switch-camera.svg" onclick="nextCamera()" />
+<div class="dim"></div>
+<div class="confirm-container">
+    <div class="close-button" onclick="closeConfirm()"></div>
+    <div class="snapshot-container">
+        <img class="snapshot" src=""/>
+    </div>
+    <div class="button-container">
+        <div class="confirm-button" onclick="confirm()">CONFIRM</div>
+        <!--<div class="deny button"></div>-->
+    </div>
+</div>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="instascan.min.js"></script>
+<script type="text/javascript" src="scanner.js"></script>
+</body>
+</html>

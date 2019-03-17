@@ -1,0 +1,12 @@
+body {
+    height: 100%;
+}
+.text-area {
+
+}
+.text-area.main-input {
+    width: 90%;
+    margin: auto;
+    height: 80%;
+    border: 1px solid black;
+}

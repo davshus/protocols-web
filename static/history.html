@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html style="height: 100%; padding: 0; margin: 0;">
+<head>
+    <title>Protocols | History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic">
+    <link rel="stylesheet" href="angular-material.min.css">
+    <link rel="stylesheet" href="common.css" />
+    <link rel="stylesheet" href="history.css" />
+</head>
+<body style="height: 100%; padding: 0; margin: 0;">
+<md-content flex layout-fill layout="column" ng-app="DabApp" ng-controller="MainController">
+    <md-toolbar class="md-primary">
+        <div class="md-toolbar-tools">
+            <h2>Protocols History</h2>
+            <span flex></span>
+        </div>
+    </md-toolbar>
+    <md-content layout-fill layout="column" flex class="md-padding">
+        <!--<md-content ng-repeat=""></md-content>-->
+        <md-list class="md-padding md-margin" md-whiteframe="1">
+            <md-list-item class="md-padding" ng-repeat="item in history">
+                <span>{{item.text}}</span>
+                <span class="md-secondary">
+                    {{item.tagsFormatted}}
+                </span>
+                <span class="md-secondary" style="margin-left: 8px;">
+                    <md-icon>account_circle</md-icon>
+                    <span>{{users[item.UID]}}</span>
+                </span>
+            </md-list-item>
+            <!--<md-divider ng-repeat-end></md-divider>-->
+        </md-list>
+    </md-content>
+</md-content>
+<script src="jquery-3.3.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="angular.min.js"></script>
+<script src="angular-animate.min.js"></script>
+<script src="angular-aria.min.js"></script>
+<script src="angular-messages.min.js"></script>
+<script src="angular-sanitize.js"></script>
+
+<!-- Angular Material Library -->
+<script src="angular-material.min.js"></script>
+
+<!-- Your application bootstrap  -->
+<script type="text/javascript">
+    /**
+     * You must include the dependency on 'ngMaterial'
+     */
+    var socket = io();
+    socket.on('scan', function(data) {
+        console.log(data);
+    });
+    const objectRegex = /(?<=\s|^)(\$)\(([^\)]+)\)/g;
+    const substanceRegex = /(?<=\s|^)(\%)\(([^\)]+)\)/g;
+    const serverUrl = 'http://129.161.90.146:55622';
+    let src = '';
+    const tagRegex = new RegExp('(' + objectRegex.source + ')|(' + substanceRegex.source + ')', 'g');
+    var app = angular.module('DabApp', ['ngMaterial', 'ngMessages', 'ngSanitize']);
+    app.config(function($sanitizeProvider) {
+        $sanitizeProvider.addValidAttrs(['num', 'ng-class']);
+    })
+        .controller('MainController', ['$scope', '$http', function($scope, $http) {
+            $scope.objects = {};
+            $scope.substances = {};
+            $scope.objectsCombined = {};
+            $scope.users = {};
+            $scope.history = [];
+            $http({
+                url: serverUrl + '/info/substances',
+                method: 'GET'
+            }).then(function(res) {
+                $scope.substances = res.data.substances;
+                return $http({
+                    url: serverUrl + '/info/objects',
+                    method: 'GET'
+                });
+            }).then(function(res) {
+                $scope.objects = res.data.objects;
+                $scope.objectsCombined = $scope.objects;
+                angular.merge($scope.objectsCombined, $scope.substances);
+                return $http.get(serverUrl + '/info/users')
+            }).then(function(users) {
+                $scope.users = users.data.users;
+                socket.on('scan', function(data) {
+                    console.log('lmao ' + data);
+                    $http.get(serverUrl + '/protocol/objectHistory?objID=' + data).then(function(res) {
+                        $scope.history = res.data.steps;
+                        $scope.history.forEach(i=>i.tagsFormatted = i.tags.map(j=>$scope.objectsCombined[j.objID!=null?j.objID:j.subID] + " at " + j.timeOfAction).join('; '));
+                        console.log($scope.history);
+                    })
+                })
+            });
+        }]);
+
+
+
+
+
+        // .controller('MainController', ['$scope', '$http', 'Parser', '$sanitize', '$sce', '$compile', function($scope, $http, Parser, $sanitize, $sce, $compile) {
+        //     $scope.compiled = [];
+        //     $scope.currentStep = 0;
+        //     $scope.currentTag = 0;
+        //     $scope.stepLengths = [];
+        //     socket.on('scan', function(data) {
+        //         let formData = new FormData();
+        //         formData.append('userID', 1);
+        //         formData.append('ID', data);
+        //         $http({
+        //             url: serverUrl + '/protocol/nextScan',
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': undefined//'multipart/form-data'
+        //             },
+        //             data: formData
+        //         }).then(function(res) {
+        //             console.log(res);
+        //             $('.scannable.current-scan').removeClass('current-scan');
+        //             $scope.currentTag++;
+        //             if ($scope.currentTag >= $scope.stepLengths[$scope.currentStep]) {
+        //                 $scope.currentTag = 0;
+        //                 $scope.currentStep++;
+        //             }
+        //             $(`.step:nth-child(${$scope.currentStep+1}) .scannable[num=${$scope.currentTag}]`).addClass('current-scan');
+        //
+        //         });
+        //     });
+        //     $scope.$on('protocolLoaded', function(event, data) {
+        //         $scope.currentStep = 0;
+        //         $scope.currentTag = 0;
+        //         eval('src = ' + data); //lord forgive me
+        //         console.log(src);
+        //         let compiled = src.map((i,n)=>{
+        //             let parsed = Parser.parse(i);
+        //             $scope.stepLengths.push(parsed.length);
+        //             let j = i;
+        //             for (let k = 0; k < parsed.length; k++) {
+        //                 let tag = parsed[k];
+        //                 console.log(tag);
+        //                 let reg = tag[1] == '$' ? objectRegex : substanceRegex;
+        //                 console.log(k);
+        //                 let tagPrefix = `<span class="scannable${k == 0 && n == 0 ? ' current-scan' : ''}" num="${k}">`;
+        //                 let tagPostfix = `</span>`;
+        //                 // console.log(tagPrefix + parsed[k][2]);
+        //                 j = j.replace(new RegExp(reg.source), tagPrefix + '$2' + tagPostfix);
+        //                 // console.log(j);
+        //             }
+        //             return j;
+        //         });
+        //         console.log(compiled);
+        //         $scope.compiled = compiled;//.map(i=>$sanitize(i));
+        //         $(`.step:nth-child(${$scope.currentStep+1}) .scannable[num=${$scope.currentTag}]`).addClass('current-scan');
+        //     });
+        //     $http.get(serverUrl + '/protocol/getFull').then(function(res) {
+        //         $scope.$broadcast('protocolLoaded', res.data);
+        //     });
+        // }])
+        // .service('Parser', [function() {
+        //     this.parse = function(txt) {
+        //         let objectTags = [];
+        //         let substanceTags = [];
+        //         let tag = objectRegex.exec(txt);
+        //         while (tag) {
+        //             objectTags.push(tag);
+        //             tag = objectRegex.exec(txt);
+        //         }
+        //         tag = substanceRegex.exec(txt);
+        //         while (tag) {
+        //             substanceTags.push(tag);
+        //             tag = substanceRegex.exec(txt);
+        //         }
+        //         let tags = objectTags.concat(substanceTags).sort((a,b)=>a.index-b.index);
+        //         return tags;
+        //     }
+        // }]);
+</script>
+</body>
+</html>

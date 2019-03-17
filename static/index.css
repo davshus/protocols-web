@@ -1,0 +1,11 @@
+.scannable {
+    color: #00aa74;
+    font-family: monospace;
+}
+.scannable.current-scan {
+    color: #008aff;
+    text-transform: uppercase;
+}
+.step {
+    font-family: "Raleway", "Roboto", sans-serif;
+}
